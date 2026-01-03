@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Script Config, please replace TS_DOMAIN with your machine-name.tailnet-name.ts.net
+TS_HOSTNAME="machine-name.tailnet-name.ts.net"
+CERT_PATH="/etc/uhttpd.crt"
+KEY_PATH="/etc/uhttpd.key"
+
+# generate certs
+# verify tailscale is up
+if /usr/sbin/tailscale status > /dev/null 2>&1; then
+    /usr/sbin/tailscale cert --cert-file "$CERT_PATH" --key-file "$KEY_PATH" "$TS_HOSTNAME"
+
+    # check success
+    if [ $? -eq 0 ]; then
+        logger -t tailscale-cert "Certificate renewed successfully for $TS_HOSTNAME"
+        /etc/init.d/uhttpd restart
+    else
+        logger -t tailscale-cert "Failed to renew certificate"
+    fi
+else
+    logger -t tailscale-cert "Tailscale is not running, skipping certificate renewal"
+fi
